@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Teacher Dashboard - R.E.A.C.H{% endblock %}
+
+{% block content %}
+<div class="dashboard-header" style="flex-wrap: wrap;">
+    <h1 class="dashboard-title">Welcome, {{ teacher.full_name() }}</h1>
+    <div style="color: var(--text-secondary); background: #f8f9fa; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.9rem;">
+        <span>Pending Consultations:</span>
+        <span class="pending-badge">{{ pending_count }}</span>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        {% if teacher.is_guidance_advocate %}
+        My Students (Guidance Advocate)
+        {% else %}
+        My Students (Grade {{ teacher.handling_grade }}, Section {{ teacher.handling_section }})
+        {% endif %}
+    </div>
+    {% if students %}
+    <div class="student-list">
+        {% for student in students %}
+        <a href="{{ url_for('view_student', student_id=student.id) }}" style="text-decoration: none; color: inherit;">
+            <div class="student-card" style="cursor: pointer;">
+                <div class="student-name">{{ student.full_name() }}</div>
+                <div class="student-info">
+                    {% if student.grade and student.section %}
+                    Grade {{ student.grade }} - Section {{ student.section }}
+                    {% else %}
+                    No grade/section assigned (Guidance Advocate)
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">👥</div>
+        <p>
+            {% if teacher.is_guidance_advocate %}
+            No students have selected you as their guidance advocate yet.
+            {% else %}
+            No students assigned to your grade and section yet.
+            {% endif %}
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-header">All Consultations</div>
+    {% if consultations %}
+    <ul class="consultation-list">
+        {% for consultation in consultations %}
+        <a href="{{ url_for('view_consultation', consultation_id=consultation.id) }}" style="text-decoration: none; color: inherit;">
+            <li class="consultation-item {{ consultation.status }}">
+                <div class="consultation-header">
+                    <div>
+                        <div class="consultation-subject">{{ consultation.subject }}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.25rem;">
+                            Student: {{ consultation.student.full_name() }}
+                        </div>
+                    </div>
+                    <span class="consultation-status status-{{ consultation.status }}">
+                        {{ consultation.status }}
+                    </span>
+                </div>
+                <div class="consultation-meta" style="font-size: 0.85rem;">
+                    <span>📅 {{ consultation.created_at.strftime('%B %d, %Y at %I:%M %p') }}</span>
+                    {% if consultation.status == 'pending' %}
+                    <span>🔴 Action Required</span>
+                    {% elif consultation.status == 'responded' %}
+                    <span>✅ Responded</span>
+                    {% endif %}
+                </div>
+            </li>
+        </a>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">💬</div>
+        <p>No consultations yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <span>Teacher Information</span>
+        <a href="{{ url_for('edit_teacher') }}" class="btn" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+            <i class="bi bi-pencil"></i> Edit
+        </a>
+    </div>
+    <div style="display: grid; gap: 1rem;">
+        <p><strong>Name:</strong> <span style="display: block; margin-top: 0.25rem;">{{ teacher.full_name() }}</span></p>
+        {% if teacher.is_guidance_advocate %}
+        <p><strong>Role:</strong> <span style="display: block; margin-top: 0.25rem;">Guidance Advocate</span></p>
+        {% else %}
+        <p><strong>Handling:</strong> <span style="display: block; margin-top: 0.25rem;">Grade {{ teacher.handling_grade }}, Section {{ teacher.handling_section }}</span></p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>Archived Students</span>
+        <a href="{{ url_for('archived_students') }}" class="btn" style="background: #ff9800; color: white; border: 2px solid #ff9800; padding: 0.5rem 1rem; font-size: 0.9rem;">
+            <i class="bi bi-archive"></i> View Archived
+        </a>
+    </div>
+</div>
+{% endblock %}
+

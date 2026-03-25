@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Student - R.E.A.C.H{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+    <a href="{{ url_for('view_student', student_id=student.id) }}" class="btn" style="background: var(--background); color: var(--text-primary); border: 2px solid var(--border);">
+        ← Back to Student Details
+    </a>
+</div>
+
+<div class="form-container" style="max-width: 700px;">
+    <h1 style="text-align: center; margin-bottom: 2rem; color: var(--text-primary);">Edit Student Information</h1>
+    
+    <form method="POST" action="{{ url_for('edit_student', student_id=student.id) }}">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label for="first_name" class="form-label">First Name</label>
+                <input type="text" id="first_name" name="first_name" class="form-input" value="{{ student.first_name }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="last_name" class="form-label">Last Name</label>
+                <input type="text" id="last_name" name="last_name" class="form-input" value="{{ student.last_name }}" required>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="middle_name" class="form-label">Middle Name</label>
+            <input type="text" id="middle_name" name="middle_name" class="form-input" value="{{ student.middle_name or '' }}" placeholder="Optional">
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label for="grade" class="form-label">Grade</label>
+                <select id="grade" name="grade" class="form-select" required>
+                    <option value="11" {% if student.grade == 11 %}selected{% endif %}>Grade 11</option>
+                    <option value="12" {% if student.grade == 12 %}selected{% endif %}>Grade 12</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="section" class="form-label">Section</label>
+                <input type="text" id="section" name="section" class="form-input" value="{{ student.section }}" required style="text-transform: uppercase;">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" id="email" name="email" class="form-input" value="{{ user.email }}" required>
+        </div>
+        
+        <!-- Emergency Contact Information -->
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 0.75rem; margin: 1.5rem 0;">
+            <h4 style="margin-bottom: 1rem; color: var(--text-primary);"><i class="bi bi-telephone-fill"></i> Emergency Contact Information</h4>
+            
+            <div class="form-group">
+                <label for="emergency_contact_name" class="form-label">Emergency Contact Name</label>
+                <input type="text" id="emergency_contact_name" name="emergency_contact_name" class="form-input" value="{{ student.emergency_contact_name or '' }}" placeholder="Parent/Guardian Name">
+            </div>
+
+            <div class="form-group">
+                <label for="emergency_contact" class="form-label">Emergency Contact Number</label>
+                <input type="tel" id="emergency_contact" name="emergency_contact" class="form-input" value="{{ student.emergency_contact or '' }}" placeholder="e.g., 09123456789">
+            </div>
+        </div>
+
+        <!-- Guidance Advocate Selection -->
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 0.75rem; margin: 1.5rem 0;">
+            <h4 style="margin-bottom: 1rem; color: var(--text-primary);"><i class="bi bi-people-fill"></i> Preferred Guidance Advocate (Optional)</h4>
+            
+            <div id="guidance_advocates_container" style="display: grid; gap: 1rem;">
+                <!-- Advocates will be loaded here by JavaScript -->
+            </div>
+            
+            <input type="hidden" id="preferred_guidance_advocate_id" name="preferred_guidance_advocate_id" value="{{ student.preferred_guidance_advocate_id or '' }}">
+        </div>
+        
+        <div class="form-group">
+            <label for="password" class="form-label">New Password</label>
+            <input type="password" id="password" name="password" class="form-input" placeholder="Leave blank to keep current password" minlength="6">
+            <small style="color: var(--text-secondary); font-size: 0.85rem;">Leave blank if you don't want to change the password. Minimum 6 characters.</small>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <a href="{{ url_for('view_student', student_id=student.id) }}" class="btn" style="background: var(--background); color: var(--text-primary); border: 2px solid var(--border);">Cancel</a>
+            <!-- Archive Button with Confirmation -->
+            <button type="button" 
+                    class="btn" 
+                    style="background: #fd2d2d; color: white; border: 2px solid #ff9800;"
+                    onclick="showArchiveConfirmation()">
+                Delete Student
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Archive Confirmation Modal -->
+<div id="archiveConfirmationModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
+    <div style="background: white; padding: 2rem; border-radius: 0.75rem; max-width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <h3 style="margin: 0 0 1rem 0; color: #ff9800;">Archive Student</h3>
+        <p style="margin: 0 0 1.5rem 0; color: var(--text-secondary);">
+            Are you sure you want to archive {{ student.full_name() }}? The student will be moved to the archived section and can be restored later.
+        </p>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <button type="button" class="btn" style="background: var(--background); color: var(--text-primary); border: 2px solid var(--border);" onclick="hideArchiveConfirmation()">
+                Cancel
+            </button>
+            <form id="archiveForm" method="POST" action="{{ url_for('delete_student', student_id=student.id) }}" style="margin: 0;">
+                <button type="submit" class="btn" style="background: #ff9800; color: white; border: 2px solid #ff9800;">
+                    Archive Student
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load guidance advocates
+document.addEventListener('DOMContentLoaded', function() {
+    const advocatesContainer = document.getElementById('guidance_advocates_container');
+    const selectedAdvocateId = document.getElementById('preferred_guidance_advocate_id').value;
+    
+    fetch('/api/guidance-advocates')
+        .then(response => response.json())
+        .then(data => {
+            const advocates = data.advocates;
+            
+            // Add "None" option
+            const noneDiv = document.createElement('div');
+            noneDiv.style.cssText = 'padding: 1rem; border: 2px solid var(--border); border-radius: 0.5rem; cursor: pointer; transition: all 0.3s;';
+            noneDiv.innerHTML = `
+                <input type="radio" id="advocate_none" name="advocate_radio" value="" style="margin-right: 0.5rem;">
+                <label for="advocate_none" style="cursor: pointer; margin: 0;">No Guidance Advocate</label>
+            `;
+            if (!selectedAdvocateId) {
+                noneDiv.style.cssText += 'background: #e7f3ff; border-color: #667eea;';
+                noneDiv.querySelector('input').checked = true;
+            }
+            noneDiv.addEventListener('click', function() {
+                document.getElementById('preferred_guidance_advocate_id').value = '';
+                updateAdvocateSelection('');
+            });
+            advocatesContainer.appendChild(noneDiv);
+            
+            if (advocates.length === 0) {
+                const emptyMsg = document.createElement('p');
+                emptyMsg.style.cssText = 'color: var(--text-secondary); font-size: 0.9rem; margin: 0;';
+                emptyMsg.textContent = 'No guidance advocates available';
+                advocatesContainer.appendChild(emptyMsg);
+            } else {
+                advocates.forEach(advocate => {
+                    const advDiv = document.createElement('div');
+                    advDiv.style.cssText = 'padding: 1rem; border: 2px solid var(--border); border-radius: 0.5rem; cursor: pointer; transition: all 0.3s;';
+                    advDiv.innerHTML = `
+                        <input type="radio" id="advocate_${advocate.id}" name="advocate_radio" value="${advocate.id}" style="margin-right: 0.5rem;">
+                        <label for="advocate_${advocate.id}" style="cursor: pointer; margin: 0; font-weight: 500;">${advocate.name}</label>
+                        <div style="margin-top: 0.5rem; margin-left: 1.5rem; font-size: 0.85rem; color: var(--text-secondary);">
+                            ${advocate.specialization ? `<p style="margin: 0.25rem 0;"><strong>Specialization:</strong> ${advocate.specialization}</p>` : ''}
+                            ${advocate.availability ? `<p style="margin: 0.25rem 0;"><strong>Availability:</strong> ${advocate.availability}</p>` : ''}
+                            <p style="margin: 0.25rem 0;"><strong>Email:</strong> ${advocate.email}</p>
+                        </div>
+                    `;
+                    
+                    if (selectedAdvocateId && parseInt(selectedAdvocateId) === advocate.id) {
+                        advDiv.style.cssText += 'background: #e7f3ff; border-color: #667eea;';
+                        advDiv.querySelector('input').checked = true;
+                    }
+                    
+                    advDiv.addEventListener('click', function() {
+                        document.getElementById('preferred_guidance_advocate_id').value = advocate.id;
+                        updateAdvocateSelection(advocate.id);
+                    });
+                    advocatesContainer.appendChild(advDiv);
+                });
+            }
+        })
+        .catch(error => console.error('Error loading advocates:', error));
+});
+
+function updateAdvocateSelection(advocateId) {
+    const advocateInputs = document.querySelectorAll('input[name="advocate_radio"]');
+    const advocateDivs = document.querySelectorAll('#guidance_advocates_container > div');
+    
+    advocateDivs.forEach(div => {
+        div.style.background = '';
+        div.style.borderColor = 'var(--border)';
+    });
+    
+    if (advocateId) {
+        document.getElementById(`advocate_${advocateId}`).parentElement.parentElement.style.cssText += 'background: #e7f3ff; border-color: #667eea;';
+    } else {
+        document.getElementById('advocate_none').parentElement.parentElement.style.cssText += 'background: #e7f3ff; border-color: #667eea;';
+    }
+}
+
+function showArchiveConfirmation() {
+    document.getElementById('archiveConfirmationModal').style.display = 'flex';
+}
+
+function hideArchiveConfirmation() {
+    document.getElementById('archiveConfirmationModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+document.getElementById('archiveConfirmationModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        hideArchiveConfirmation();
+    }
+});
+
+// Prevent form submission on main form when archive is clicked
+document.getElementById('archiveForm').addEventListener('submit', function(e) {
+    // Add any additional validation here if needed
+    return true;
+});
+
+</script>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard - R.E.A.C.H{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1 class="dashboard-title">Welcome, {{ student.full_name() }}</h1>
+</div>
+
+<div class="card">
+    <div class="card-header">My Consultations</div>
+    {% if consultations %}
+    <ul class="consultation-list">
+        {% for consultation in consultations %}
+        <li class="consultation-item {{ consultation.status }}">
+            <a href="{{ url_for('view_consultation', consultation_id=consultation.id) }}" class="consultation-link">
+                <div class="consultation-header">
+                    <div class="consultation-subject">{{ consultation.subject }}</div>
+                    <span class="consultation-status status-{{ consultation.status }}">
+                        {{ consultation.status }}
+                    </span>
+                </div>
+                <div class="consultation-meta">
+                    <span>📅 {{ consultation.created_at.strftime('%B %d, %Y at %I:%M %p') }}</span>
+                    {% if consultation.status == 'pending' %}
+                    <span>⏳ Waiting for response</span>
+                    {% elif consultation.status == 'responded' %}
+                    <span>✅ Teacher responded</span>
+                    {% endif %}
+                </div>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">📋</div>
+        <h3>No consultations yet</h3>
+        <p>Start a new consultation to get in touch with your teacher.</p>
+        <a href="{{ url_for('new_consultation') }}" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Create First Consultation</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-header">Student Information</div>
+    <div style="display: grid; gap: 1rem;">
+        <div><strong>Name:</strong> <span style="display: block; margin-top: 0.25rem;">{{ student.full_name() }}</span></div>
+        <div><strong>Grade:</strong> <span style="display: block; margin-top: 0.25rem;">{{ student.grade }}</span></div>
+        <div><strong>Section:</strong> <span style="display: block; margin-top: 0.25rem;">{{ student.section }}</span></div>
+    </div>
+</div>
+{% endblock %}
+
